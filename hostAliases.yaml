@@ -1,0 +1,3 @@
+hostAliases:
+- ip: 10.100.211.74
+  hostnames: [demo.helm.template]

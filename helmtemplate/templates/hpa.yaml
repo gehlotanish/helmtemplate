@@ -1,0 +1,18 @@
+{{- if $.Values.hpa }}
+apiVersion: "autoscaling/v1"
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.deployment.projectName }}
+spec:
+  scaleTargetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: {{ .Values.deployment.projectName }}
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: {{ .Values.hpa.cpuUtilization }}
+{{- end }}
