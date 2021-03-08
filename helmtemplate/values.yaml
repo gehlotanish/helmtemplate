@@ -4,8 +4,8 @@ deployment:
    namespace: default
    imagename: nginx
    imagetag: 1.19.0
-   imagepullsec: ecrreg  # Comment to disable
-   cpuLimit: 300m        # Gurantee QOS Class, Comment if you want to use best effort
+   imagepullsec: ecrreg       # Comment to disable
+   cpuLimit: 300m             # Guaranteed QOS Class, Comment if you want to use BestEffort
    memoryLimit: 500Mi
    port:
     - 3000
@@ -16,13 +16,13 @@ svc:
    fdqn: demo.helm.template
 
 hpa:
-   enabled: true
+   enabled: false
    minReplicas: 1
    maxReplicas: 2
    cpuUtilization: 80
   
 pvc:
-   enabled: true
+   enabled: false
    storageClassName: nfs-provisioner
 
    mount:
@@ -36,7 +36,7 @@ pvc:
 ####--------------------------- ENVIRONMENT VARIABLES ---------------------------------
 
 env:
-  enabled: true           # This will disable All ENV values including crd, crdMulti.
+  enabled: false         # This will disable All ENV values including crd, crdMulti.
   data:
   - name: NODE_ENV
     value: "development"
@@ -47,7 +47,7 @@ env:
 #
 # Kubernetes Secret ENV
 crd:                      # Single secret with multiple value. No need to encrypt b64.
-  enabled: true
+  enabled: false
   creds:
   - name: pgadmin
     key: passwd
@@ -56,7 +56,7 @@ crd:                      # Single secret with multiple value. No need to encryp
 
 ##
 crdMulti:                # Multiple Secret. Need to encrypt b64
-  enabled: true
+  enabled: false
   creds:
   - secretName: redis    # Represent secret name of credentials.
     name: redisuser
