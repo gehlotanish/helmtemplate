@@ -1,47 +1,68 @@
+###---------------------------------------------------------------------------
 deployment:
    projectName: helm-template
-   imagename: nginx:1.19.0
-   imagetag: 1
-   port: 3000
-#   imagepullsec: ecrreg
-   cpuLimit: 300m
+   namespace: default
+   imagename: nginx
+   imagetag: 1.19.0
+   imagepullsec: ecrreg  # Comment to disable
+   cpuLimit: 300m        # Gurantee QOS Class, Comment if you want to use best effort
    memoryLimit: 500Mi
+   port:
+    - 3000
+    - 4000
 
 svc:
-   clustertype: ClusterIP
+   clustertype: ClusterIP     # Support: LoadBalancer, NodePort, ClusterIP
    fdqn: demo.helm.template
 
-## Comment if not to use HPA
 hpa:
+   enabled: true
    minReplicas: 1
    maxReplicas: 2
    cpuUtilization: 80
-## Comment if not to use PVC
   
-####--------------------------------------------------------------------------
-## Comment All if not to use HPA
-env: 
+pvc:
+   enabled: true
+   storageClassName: nfs-provisioner
+
+   mount:
+   - pvName: pv1 
+     mountPath: /mnt
+     storageSize: 8Gi
+   - pvName: pv2
+     mountPath: /opt
+     storageSize: 1Gi
+
+####--------------------------- ENVIRONMENT VARIABLES ---------------------------------
+
+env:
+  enabled: true           # This will disable All ENV values including crd, crdMulti.
+  data:
   - name: NODE_ENV
     value: "development"
   - name: API_PORT
     value: "3000"
   - name: NAME
     value: "Template API"
-## 
-# Secret ENV, Comment if not in use.
 #
-##
-# Single secret with multiple value. No need to encrypt b64.
-
-crd:
+# Kubernetes Secret ENV
+crd:                      # Single secret with multiple value. No need to encrypt b64.
+  enabled: true
+  creds:
   - name: pgadmin
     key: passwd
+  - name: mysql
+    key: mysqlpasswd
 
 ##
-#  Multiple Secret. Need to encrypt b64
-
-crdMulti:
-  - secname: redis    # Represent secret name of credentials.
+crdMulti:                # Multiple Secret. Need to encrypt b64
+  enabled: true
+  creds:
+  - secretName: redis    # Represent secret name of credentials.
     name: redisuser
     key: cnBhc3N3ZA==
+  - secretName: nosql    # Represent secret name of credentials.
+    name: couchdb
+    key: cnBhc3N3ZA==
+
 ####----------------------------------------------------------------------------

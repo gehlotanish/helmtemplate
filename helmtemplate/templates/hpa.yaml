@@ -1,13 +1,14 @@
-{{- if $.Values.hpa }}
-apiVersion: "autoscaling/v1"
+{{- if $.Values.hpa.enabled }}
+apiVersion: "autoscaling/v2beta1"
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ .Values.deployment.projectName }}
+  name: {{ $.Values.deployment.projectName }}
+  namespace: {{ $.Values.deployment.namespace }}
 spec:
   scaleTargetRef:
     apiVersion: "apps/v1"
     kind: Deployment
-    name: {{ .Values.deployment.projectName }}
+    name: {{ $.Values.deployment.projectName }}
   minReplicas: {{ .Values.hpa.minReplicas }}
   maxReplicas: {{ .Values.hpa.maxReplicas }}
   metrics:

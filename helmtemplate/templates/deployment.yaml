@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: {{ .Values.deployment.projectName }}
+    namespace: {{ .Values.deployment.namespace }}
 spec:
     replicas: 1
     selector:
@@ -12,9 +13,19 @@ spec:
             labels:
                 app: {{ .Values.deployment.projectName }}
         spec:
-            {{- if $.Values.deployment.imagepullsec }}
+            {{- if .Values.deployment.imagepullsec }}
             imagePullSecrets:
-                      - name: {{ .Values.deployment.imagepullsec }}
+              - name: {{ .Values.deployment.imagepullsec }}
+            {{- end }}
+#
+## PVC
+            {{- if .Values.pvc.enabled }}
+            volumes:
+            {{- range .Values.pvc.mount }}
+            - name: {{ $.Values.deployment.projectName }}-{{ .pvName }}
+              persistentVolumeClaim:
+                claimName: {{ $.Values.deployment.projectName }}-{{ .pvName }}
+            {{- end }}
             {{- end }}
 #
 # Add Host alias of svc into pod /etc/hosts, exec only if exist hostAliases Param.
@@ -29,25 +40,31 @@ spec:
                 - name: {{ .Values.deployment.projectName }}
                   image: {{ .Values.deployment.imagename }}:{{ .Values.deployment.imagetag }}
                   imagePullPolicy: Always
+                  {{- if .Values.deployment.cpuLimit }}
                   resources:
                       limits:
                           memory: {{ quote .Values.deployment.memoryLimit }}
                           cpu: {{ quote .Values.deployment.cpuLimit }}
+                  {{- end }}
                   ports:
-                      - name: port-3000
-                        containerPort: {{ .Values.deployment.port }}
+                  {{- range .Values.deployment.port }}
+                      - name: port-{{ . }}
+                        containerPort: {{ . }}
+                  {{- end }}
+
+                  {{- if $.Values.env.enabled }}
                   env:
 #
 # Looping for env Value as mention in values.yaml file 
-                  {{- range .Values.env }}
+                  {{- range .Values.env.data }}
                     - name: {{ .name }}
                       value: {{ quote .value }}
                   {{- end }}
 #
 # Single secret with multiple value
 #
-                  {{- if $.Values.crd }}
-                  {{- range $.Values.crd }}
+                  {{- if $.Values.crd.enabled }}
+                  {{- range $.Values.crd.creds }}
                     - name: {{ .name }}
                       valueFrom:
                         secretKeyRef:
@@ -57,13 +74,22 @@ spec:
                   {{- end }}
 #
 # Multiple secrets
-                  {{- if $.Values.crdMulti }}
-                  {{- range $.Values.crdMulti }}
+                  {{- if .Values.crdMulti.enabled }}
+                  {{- range $.Values.crdMulti.creds }}
                     - name: {{ .name }}
                       valueFrom:
                         secretKeyRef:
-                           name: {{ .secname }}
+                           name: {{ .secretName }}
                            key: password
                   {{- end }}
                   {{- end }}
-
+                  {{- end }}
+#
+## PVC
+                  {{- if .Values.pvc.enabled }}
+                  volumeMounts:
+                  {{- range $.Values.pvc.mount }}
+                    - mountPath: {{ .mountPath }}
+                      name: {{ $.Values.deployment.projectName }}-{{ .pvName }}
+                  {{- end }}
+                  {{- end }}
